@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Sacramento&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --scrim: rgba(254, 240, 205, 0.55);
+    --scrim: rgba(240, 232, 218, 0.55);
     --text-dark: #4A3420;
     --text-ui: #6B4E2E;
     --gold: #C79A4B;
@@ -256,7 +256,7 @@
     <div class="reset-top-spacer"></div>
     <div class="reset-bottom">
       <div class="reset-msg">Oops. It's been a little while. Looks like you need to rescan the QR code to see today's message.</div>
-      
+      <button class="reset-btn" id="resetBtn">Tap to reset &amp; preview</button>
     </div>
     <div class="reset-footer">www.yourdailyqr.com</div>
   </div>
@@ -403,26 +403,30 @@ document.getElementById('app').addEventListener('touchend', (e) => {
   touchStartX = null;
 }, {passive:true});
 
-// ---- Gate logic (rolling 72-hour inactivity, localStorage only) ----
-function checkGate(){
-  const now = Date.now();
-  const stampStr = localStorage.getItem(GATE_KEY);
-  const threshold = GATE_HOURS * 60 * 60 * 1000;
+// ---- Gate logic ----
+// Rule 1: any fresh load (QR scan, typed URL, reload) always shows content
+// immediately and refreshes the activity stamp — no threshold check here.
+// Rule 2: the 72-hour threshold is only ever checked when an ALREADY-OPEN
+// tab/window regains focus (visibilitychange) without an intervening load.
+function showOnLoad(){
+  localStorage.setItem(GATE_KEY, String(Date.now()));
+  showContent();
+}
 
+function checkGateOnForeground(){
+  const stampStr = localStorage.getItem(GATE_KEY);
   if (!stampStr){
-    localStorage.setItem(GATE_KEY, String(now));
-    showContent();
+    // No stamp means the gate is already showing (cleared when it fired)
+    // and nothing has reloaded since — leave the gate up until the next scan.
     return;
   }
-  const stamp = parseInt(stampStr, 10);
-  const elapsed = now - stamp;
-  if (elapsed < threshold){
-    localStorage.setItem(GATE_KEY, String(now));
-    showContent();
-  } else {
+  const threshold = GATE_HOURS * 60 * 60 * 1000;
+  const elapsed = Date.now() - parseInt(stampStr, 10);
+  if (elapsed >= threshold){
     localStorage.removeItem(GATE_KEY);
     showReset();
   }
+  // else: still within the window — content is already showing, nothing to do.
 }
 
 function showContent(){
@@ -440,11 +444,19 @@ function showReset(){
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible'){
-    checkGate();
+    checkGateOnForeground();
   }
 });
 
-checkGate();
+document.getElementById('resetBtn').addEventListener('click', () => {
+  // Testing convenience only: since a fresh load always shows content now,
+  // clearing + reloading would no longer preview the reset screen — so this
+  // shows it directly instead.
+  localStorage.removeItem(GATE_KEY);
+  showReset();
+});
+
+showOnLoad();
 
 window.addEventListener('resize', () => {
   const entryTextEl = document.getElementById('entryText');
