@@ -117,8 +117,8 @@
   .nav{
     display:flex;
     align-items:center;
-    justify-content:center;
-    gap:18px;
+    justify-content:space-between;
+    width:100%;
     margin-bottom:6px;
   }
   .nav-arrow{
@@ -136,7 +136,7 @@
     font-size:24px;
     letter-spacing:1.5px;
     color:var(--text-ui);
-    min-width:110px;
+    flex:1;
     text-align:center;
   }
   .site-url{
@@ -256,7 +256,7 @@
     <div class="reset-top-spacer"></div>
     <div class="reset-bottom">
       <div class="reset-msg">Oops. It's been a little while. Looks like you need to rescan the QR code to see today's message.</div>
-      <button class="reset-btn" id="resetBtn">Tap to reset &amp; preview</button>
+      
     </div>
     <div class="reset-footer">www.yourdailyqr.com</div>
   </div>
@@ -446,14 +446,6 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible'){
     checkGateOnForeground();
   }
-});
-
-document.getElementById('resetBtn').addEventListener('click', () => {
-  // Testing convenience only: since a fresh load always shows content now,
-  // clearing + reloading would no longer preview the reset screen — so this
-  // shows it directly instead.
-  localStorage.removeItem(GATE_KEY);
-  showReset();
 });
 
 showOnLoad();
